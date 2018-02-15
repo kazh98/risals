@@ -10,6 +10,9 @@
     <div id="loader"></div>
     <h1>{{ title }}</h1>
     <div class="container">
+      <p>
+        <a class="button" href="../">Parent Directory</a>
+      </p>
       <ul class="gallery">
 {%- for img in images %}
         <li>

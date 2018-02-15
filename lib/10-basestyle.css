@@ -48,3 +48,23 @@ h1 {
   color: #6080FF;
   text-decoration: none;
 }
+
+a.button:link,
+a.button:visited {
+  background-color: #FFFFFF;
+  border: 3px double #6080FF;
+  color: #6080FF;
+  font-size: 18pt;
+  padding: 0pt 12pt;
+  text-decoration: none;
+}
+a.button:hover {
+  background-color: #6080FF;
+  border: 3px double #FFFFFF;
+  color: #FFFFFF;
+}
+a.button:active {
+  background-color: #FF8060;
+  border: 3px double #FFFFFF;
+  color: #FFFFFF;
+}

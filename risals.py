@@ -4,7 +4,7 @@
 ### risals: Photo Album Maker
 ###  - 2018 Risa YASAKA and Kazuhiro HISHINUMA.
 ################################################################################
-import os
+import os, sys
 from datetime import datetime
 from glob import glob
 from tqdm import tqdm
@@ -79,13 +79,14 @@ if __name__ == '__main__':
     for pattern in ['./*.jpg', './*.JPG', './*.jpeg', './*.JPEG']:
         images.extend(glob(pattern))
     images = list(map(lock_s, tqdm(sorted(images))))
+    
     env = Environment(
         loader=FileSystemLoader('.', 'utf-8')
         )
     tpl = env.get_template('index.tpl');
     with open('index.html', 'wt') as fp:
         fp.write(tpl.render({
-            "title": DEFAULT_TITLE,
+            "title": sys.argv[1] if len(sys.argv) > 1 else DEFAULT_TITLE,
             "images": images,
             "creation_time": datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
             "generator_url": "https://github.com/kazh98/risals",
