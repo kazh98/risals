@@ -1,0 +1,50 @@
+@charset "UTF-8";
+/*******************************************************************************
+ * Base Style Definitions
+ *  - 2018 Risa YASAKA and Kazuhiro HISHINUMA
+ ******************************************************************************/
+
+html, body {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  background-color: #ECECEC;
+  color: #000000;
+  font-family: sans-serif;
+}
+
+h1 {
+  background-color: #6080FF;
+  color: #FFFFFF;
+  margin: 0px;
+  padding: 12pt 6pt;
+  font-size: 24pt;
+}
+
+.container {
+  margin-left: 5%;
+  margin-right: 5%;
+}
+
+.footer {
+  background-color: #6080FF;
+  color: #FFFFFF;
+  margin-top: 36pt;
+  padding: 3pt 12pt 12pt 3pt;
+  font-size: 11pt;
+  text-align: right;
+}
+
+.footer a:link,
+.footer a:visited {
+  color: #FFDF60;
+  text-decoration: underline;
+}
+.footer a:hover,
+.footer a:active {
+  background-color: #FFDF60;
+  color: #6080FF;
+  text-decoration: none;
+}
