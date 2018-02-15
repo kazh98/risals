@@ -1,3 +1,9 @@
+@charset "UTF-8";
+/*******************************************************************************
+ * R00-Loader
+ *  - 2018 Risa YASAKA and Kazuhiro HISHINUMA.
+ ******************************************************************************/
+
 div#loader {
   position: fixed;
   top: 0px; left: 0px; right: 0px; bottom: 0px;
