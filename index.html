@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja">
   <head>
@@ -9,13 +9,39 @@
   <body>
     <div id="loader"></div>
     <h1>Index of /</h1>
-    <p>
-      <img src="./IMG_0001.jpg" />
-      <img src="./IMG_0002.jpg" />
-      <img src="./IMG_0003.jpg" />
-      <img src="./IMG_0004.jpg" />
-      <img src="./IMG_0005.jpg" />
-    </p>
+    <div class="container">
+      <ul class="gallery">
+        <li>
+          <a href="./IMG_0001.jpg" data-thumbnail="./cache/IMG_0001_large.jpg">
+            <img src="./cache/IMG_0001_small.jpg" width="180" height="135" />
+          </a>
+        </li>
+        <li>
+          <a href="./IMG_0002.jpg" data-thumbnail="./cache/IMG_0002_large.jpg">
+            <img src="./cache/IMG_0002_small.jpg" width="180" height="135" />
+          </a>
+        </li>
+        <li>
+          <a href="./IMG_0003.jpg" data-thumbnail="./cache/IMG_0003_large.jpg">
+            <img src="./cache/IMG_0003_small.jpg" width="180" height="135" />
+          </a>
+        </li>
+        <li>
+          <a href="./IMG_0004.jpg" data-thumbnail="./cache/IMG_0004_large.jpg">
+            <img src="./cache/IMG_0004_small.jpg" width="180" height="135" />
+          </a>
+        </li>
+        <li>
+          <a href="./IMG_0005.jpg" data-thumbnail="./cache/IMG_0005_large.jpg">
+            <img src="./cache/IMG_0005_small.jpg" width="180" height="135" />
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="footer">
+last updated on 2018/02/15 18:01:23.<br />
+<a href="https://github.com/kazh98/risals">The source code of risals (ver. 1.10)</a> which generated this page is now available.
+    </div>
     <script type="text/javascript" src="./lib/00-loader.js"></script>
   </body>
 </html>

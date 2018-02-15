@@ -1,6 +1,7 @@
 # Files specific to this project
 /index.html
 /*.jpg
+/cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
