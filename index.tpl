@@ -3,6 +3,9 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja">
   <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="risals; https://github.com/kazh98/risals" />
     <title>{{ title }}</title>
     <link rel="stylesheet" type="text/css" href="./lib/00-loader.css" />
   </head>
