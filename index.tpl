@@ -11,7 +11,7 @@
   </head>
   <body>
     <div id="loader">
-      <img src="{{ images[0].thumbnail2 }}" />
+      <img hidden="hidden" class="hidden" src="{{ images[0].thumbnail2 }}" />
     </div>
     <h1>{{ title|e }}</h1>
     <div class="container">

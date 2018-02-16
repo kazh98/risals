@@ -10,3 +10,6 @@ div#loader {
   background-color: #202020; color: #FFFFFF;
   z-index: 65535;
 }
+div#loader > .hidden {
+  display: none;
+}
