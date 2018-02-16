@@ -6,6 +6,12 @@
 
 ul.gallery {
   display: block;
+  list-style-type: none;
+}
+ul.gallery,
+ul.gallery > li {
+  margin-left: 0px;
+  padding-left: 0px;
 }
 
 ul.gallery li {
