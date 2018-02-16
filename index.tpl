@@ -10,7 +10,9 @@
     <link rel="stylesheet" type="text/css" href="./lib/00-loader.css" />
   </head>
   <body>
-    <div id="loader"></div>
+    <div id="loader">
+      <img src="{{ images[0].thumbnail2 }}" />
+    </div>
     <h1>{{ title }}</h1>
     <div class="container">
       <p>
