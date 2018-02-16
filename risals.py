@@ -11,7 +11,7 @@ from tqdm import tqdm
 from PIL import Image
 from jinja2 import Environment, FileSystemLoader
 from typing import Tuple
-__version__ = '1.12'
+__version__ = '1.12-dev'
 
 
 ###
@@ -21,13 +21,17 @@ DEFAULT_TITLE = 'Index of /'
 
 THUMBNAIL_DIR = './cache'
 
-THUMBNAIL1_WIDTH  = 180
-THUMBNAIL1_HEIGHT = 135
+THUMBNAIL1_WIDTH  = 200
+THUMBNAIL1_HEIGHT = 150
 THUMBNAIL1_SUFFIX = '_small'
 
 THUMBNAIL2_WIDTH  = 1024
 THUMBNAIL2_HEIGHT = 768
 THUMBNAIL2_SUFFIX = '_large'
+
+BASETIME = 0
+if '__file__' in globals() and os.path.isfile(__file__):
+    BASETIME = os.stat(__file__).st_mtime
 
 
 ###
@@ -57,7 +61,7 @@ def __make_thumbnail(img: Image, suffix: str, width: int, height: int) -> Tuple[
         os.makedirs(THUMBNAIL_DIR)
     prefix = os.path.splitext(img.filename)[0]
     target = os.path.join(THUMBNAIL_DIR, os.path.basename(prefix + suffix + ".jpg"))
-    if os.path.isfile(target) and os.stat(img.filename).st_mtime < os.stat(target).st_mtime:
+    if os.path.isfile(target) and max(BASETIME, os.stat(img.filename).st_mtime) < os.stat(target).st_mtime:
         thumb = Image.open(target, 'r')
         return target, thumb.size[0], thumb.size[1]
     thumb_width  = img.size[0] * height // img.size[1]
@@ -89,7 +93,7 @@ if __name__ == '__main__':
             "title": sys.argv[1] if len(sys.argv) > 1 else DEFAULT_TITLE,
             "images": images,
             "creation_time": datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
-            "generator_url": "https://github.com/kazh98/risals",
-            "generator_name": "risals",
+            "generator_url": 'https://github.com/kazh98/risals',
+            "generator_name": 'risals',
             "generator_version": __version__,
             }))
