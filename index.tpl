@@ -6,14 +6,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="risals; https://github.com/kazh98/risals" />
-    <title>{{ title }}</title>
+    <title>{{ title|e }}</title>
     <link rel="stylesheet" type="text/css" href="./lib/00-loader.css" />
   </head>
   <body>
     <div id="loader">
       <img src="{{ images[0].thumbnail2 }}" />
     </div>
-    <h1>{{ title }}</h1>
+    <h1>{{ title|e }}</h1>
     <div class="container">
       <p>
         <a class="button" href="../">Parent Directory</a>
@@ -29,8 +29,8 @@
       </ul>
     </div>
     <div class="footer">
-last updated on {{ creation_time }}.<br />
-<a href="{{ generator_url }}">The source code of {{ generator_name }} (ver. {{ generator_version }})</a> which generated this page is now available.
+last updated on {{ creation_time|e }}.<br />
+<a href="{{ generator_url }}">The source code of {{ generator_name|e }} (ver. {{ generator_version|e }})</a> which generated this page is now available.
     </div>
     <script type="text/javascript" src="./lib/00-loader.js"></script>
   </body>
