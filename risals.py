@@ -4,8 +4,9 @@
 ### risals: Photo Album Maker
 ###  - 2018 Risa YASAKA and Kazuhiro HISHINUMA.
 ################################################################################
-import os, sys
+import os, sys, itertools
 from datetime import datetime
+from argparse import ArgumentParser
 from glob import glob
 from tqdm import tqdm
 from PIL import Image
@@ -21,6 +22,7 @@ DEFAULT_TITLE = 'Index of /'
 
 THUMBNAIL_DIR = './cache'
 
+THUMBNAIL1_RATIO  = 90
 THUMBNAIL1_WIDTH  = 200
 THUMBNAIL1_HEIGHT = 150
 THUMBNAIL1_SUFFIX = '_small'
@@ -37,10 +39,19 @@ if '__file__' in globals() and os.path.isfile(__file__):
 ###
 ### 
 ###
-def lock_s(filename: str) -> dict:
+def lock_s(filename: str, rich: bool=False) -> dict:
     img = Image.open(filename, 'r')
-    thumb1, thumb1_w, thumb1_h = __make_thumbnail(
-        img, THUMBNAIL1_SUFFIX, THUMBNAIL1_WIDTH, THUMBNAIL1_HEIGHT)
+    if rich == True:
+        thumb1 = __make_thumbnail(
+            img, THUMBNAIL1_SUFFIX,
+            THUMBNAIL1_WIDTH  * THUMBNAIL1_RATIO // 100,
+            THUMBNAIL1_HEIGHT * THUMBNAIL1_RATIO // 100)[0]
+        thumb1_rich, thumb1_w, thumb1_h = __make_thumbnail(
+            img, THUMBNAIL1_SUFFIX + '_rich', THUMBNAIL1_WIDTH, THUMBNAIL1_HEIGHT)
+    else:
+        thumb1, thumb1_w, thumb1_h = __make_thumbnail(
+            img, THUMBNAIL1_SUFFIX, THUMBNAIL1_WIDTH, THUMBNAIL1_HEIGHT)
+        thumb1_rich = thumb1
     thumb2, thumb2_w, thumb2_h = __make_thumbnail(
         img, THUMBNAIL2_SUFFIX, THUMBNAIL2_WIDTH, THUMBNAIL2_HEIGHT)
     return {
@@ -48,6 +59,7 @@ def lock_s(filename: str) -> dict:
         "thumbnail1": thumb1,
         "thumbnail1_width": thumb1_w,
         "thumbnail1_height": thumb1_h,
+        "thumbnail1_rich": thumb1_rich,
         "thumbnail2": thumb2,
         "thumbnail2_width": thumb2_w,
         "thumbnail2_height": thumb2_h,
@@ -79,10 +91,17 @@ def __make_thumbnail(img: Image, suffix: str, width: int, height: int) -> Tuple[
 ###
 ###
 if __name__ == '__main__':
+    argparse = ArgumentParser(description='A web photo album generator')
+    argparse.add_argument('-r', '--rich', action='store_true',
+                          help='generate supplementary files for improving user experiences')
+    argparse.add_argument('title', action='store', nargs='?', default=DEFAULT_TITLE,
+                          help='a message shown as a title of generated album')
+    args = argparse.parse_args()
+    
     images = []
     for pattern in ['./*.jpg', './*.JPG', './*.jpeg', './*.JPEG']:
         images.extend(glob(pattern))
-    images = list(map(lock_s, tqdm(sorted(images))))
+    images = list(map(lock_s, tqdm(sorted(images)), itertools.repeat(args.rich)))
     
     env = Environment(
         loader=FileSystemLoader('.', 'utf-8')
@@ -90,7 +109,8 @@ if __name__ == '__main__':
     tpl = env.get_template('index.tpl');
     with open('index.html', 'wt') as fp:
         fp.write(tpl.render({
-            "title": sys.argv[1] if len(sys.argv) > 1 else DEFAULT_TITLE,
+            "rich": args.rich,
+            "title": args.title,
             "images": images,
             "creation_time": datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
             "generator_url": 'https://github.com/kazh98/risals',

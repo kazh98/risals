@@ -9,7 +9,7 @@
     <title>{{ title|e }}</title>
     <link rel="stylesheet" type="text/css" href="./lib/00-loader.css" />
   </head>
-  <body>
+  <body{% if rich %} class="rich"{% endif %}>
     <div id="loader">
       <img hidden="hidden" class="hidden" src="{{ images[0].thumbnail2 }}" />
     </div>
@@ -32,6 +32,9 @@
 last updated on {{ creation_time|e }}.<br />
 <a href="{{ generator_url }}">The source code of {{ generator_name|e }} (ver. {{ generator_version|e }})</a> which generated this page is now available.
     </div>
+{%- if rich %}{% for img in images %}
+    <img src="{{ img.thumbnail1_rich }}" hidden="hidden" class="preload" />
+{%- endfor %}{% endif %}
     <script type="text/javascript" src="./lib/00-loader.js"></script>
   </body>
 </html>
