@@ -12,7 +12,7 @@ from tqdm import tqdm
 from PIL import Image
 from jinja2 import Environment, FileSystemLoader
 from typing import Tuple
-__version__ = '1.12-dev'
+__version__ = '1.12'
 
 
 ###
