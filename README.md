@@ -23,8 +23,3 @@ sudo -H pip install tqdm
 sudo -H pip install Pillow
 sudo -H pip install jinja2
 ```
-
-## Important Notice
-This version has a fatal defect which prevents some browser from rendering generated album page.
-Fortunately, you can easily fix this problem.
-Please see the issue #3 before you begin to use this software.
