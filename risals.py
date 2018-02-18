@@ -94,6 +94,8 @@ if __name__ == '__main__':
     argparse = ArgumentParser(description='A web photo album generator')
     argparse.add_argument('-r', '--rich', action='store_true',
                           help='generate supplementary files for improving user experiences')
+    argparse.add_argument('-d', '--debug', action='store_true',
+                          help='enable debug mode')
     argparse.add_argument('title', action='store', nargs='?', default=DEFAULT_TITLE,
                           help='a message shown as a title of generated album')
     args = argparse.parse_args()
@@ -110,6 +112,7 @@ if __name__ == '__main__':
     with open('index.html', 'wt') as fp:
         fp.write(tpl.render({
             "rich": args.rich,
+            "debug": args.debug,
             "title": args.title,
             "images": images,
             "creation_time": datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
