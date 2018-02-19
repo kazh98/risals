@@ -12,6 +12,7 @@
 {%- endfor %}{% endif %}
   </head>
   <body{% if rich %} class="rich"{% endif %} data-loader-background="{{ images[0].thumbnail2 }}"{% if debug %} data-mode="debug"{% endif %}>
+    <script type="text/javascript" src="./lib/00-loader.js"></script>
     <h1>{{ title|e }}</h1>
     <div class="container">
       <p>
@@ -31,6 +32,5 @@
 last updated on {{ creation_time|e }}.<br />
 <a href="{{ generator_url }}">The source code of {{ generator_name|e }} (ver. {{ generator_version|e }})</a> which generated this page is now available.
     </div>
-    <script type="text/javascript" src="./lib/00-loader.js"></script>
   </body>
 </html>
