@@ -37,10 +37,12 @@ h1 {
   text-align: right;
 }
 
+.footer a {
+  text-decoration: underline;
+}
 .footer a:link,
 .footer a:visited {
   color: #FFDF60;
-  text-decoration: underline;
 }
 .footer a:hover,
 .footer a:active {
@@ -49,22 +51,21 @@ h1 {
   text-decoration: none;
 }
 
-a.button:link,
-a.button:visited {
-  background-color: #FFFFFF;
-  border: 3px double #6080FF;
-  color: #6080FF;
+a.button {
   font-size: 18pt;
   padding: 0pt 12pt;
   text-decoration: none;
+  background-color: #FFFFFF;
+  border: 3px double #6080FF;
+  color: #6080FF;
 }
 a.button:hover {
   background-color: #6080FF;
-  border: 3px double #FFFFFF;
+  border-color: #FFFFFF;
   color: #FFFFFF;
 }
 a.button:active {
   background-color: #FF8060;
-  border: 3px double #FFFFFF;
+  border-color: #FFFFFF;
   color: #FFFFFF;
 }
