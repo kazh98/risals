@@ -13,12 +13,12 @@
   </head>
   <body{% if rich %} class="rich"{% endif %}{% if debug %} data-mode="debug"{% endif %}>
     <script type="text/javascript" src="./lib/00-preloader.js"></script>
-    <h1>{{ title|e }}</h1>
-    <div class="container">
+    <div id="contents">
+      <h1>{{ title|e }}</h1>
       <p>
         <a class="button" href="../">Parent Directory</a>
       </p>
-      <ul class="gallery">
+      <ul id="gallery">
 {%- for img in images %}
         <li>
           <a href="{{ img.filename }}" data-thumbnail="{{ img.thumbnail2 }}">
@@ -27,10 +27,11 @@
         </li>
 {%- endfor %}
       </ul>
-    </div>
-    <div class="footer">
+      <hr />
+      <p id="footer">
 last updated on {{ creation_time|e }}.<br />
 <a href="{{ generator_url }}">The source code of {{ generator_name|e }} (ver. {{ generator_version|e }})</a> which generated this page is now available.
+      </p>
     </div>
     <script type="text/javascript" src="./lib/01-loader.js"></script>
   </body>
