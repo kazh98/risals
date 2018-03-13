@@ -11,7 +11,7 @@
     <link rel="preload" href="{{ img.thumbnail1_rich }}" as="image" />
 {%- endfor %}{% endif %}
   </head>
-  <body{% if rich %} class="rich"{% endif %} data-loader-background="{{ images[0].thumbnail2 }}"{% if debug %} data-mode="debug"{% endif %}>
+  <body{% if rich %} class="rich"{% endif %}{% if debug %} data-mode="debug"{% endif %}>
     <script type="text/javascript" src="./lib/00-preloader.js"></script>
     <h1>{{ title|e }}</h1>
     <div class="container">
