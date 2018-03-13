@@ -12,7 +12,7 @@ from tqdm import tqdm
 from PIL import Image
 from jinja2 import Environment, FileSystemLoader
 from typing import Tuple
-__version__ = '1.13-dev'
+__version__ = '1.19-dev'
 
 
 ###
@@ -45,12 +45,12 @@ def lock_s(filename: str, rich: bool=False, purge: bool=False) -> dict:
         thumb1 = __make_thumbnail(
             img, THUMBNAIL1_SUFFIX,
             THUMBNAIL1_WIDTH  * THUMBNAIL1_RATIO // 100,
-            THUMBNAIL1_HEIGHT * THUMBNAIL1_RATIO // 100)[0]
+            THUMBNAIL1_HEIGHT * THUMBNAIL1_RATIO // 100, colored=False)[0]
         thumb1_rich, thumb1_w, thumb1_h = __make_thumbnail(
             img, THUMBNAIL1_SUFFIX + '_rich', THUMBNAIL1_WIDTH, THUMBNAIL1_HEIGHT, purge=purge)
     else:
         thumb1, thumb1_w, thumb1_h = __make_thumbnail(
-            img, THUMBNAIL1_SUFFIX, THUMBNAIL1_WIDTH, THUMBNAIL1_HEIGHT, purge=purge)
+            img, THUMBNAIL1_SUFFIX, THUMBNAIL1_WIDTH, THUMBNAIL1_HEIGHT, purge=purge, colored=False)
         thumb1_rich = thumb1
     thumb2, thumb2_w, thumb2_h = __make_thumbnail(
         img, THUMBNAIL2_SUFFIX, THUMBNAIL2_WIDTH, THUMBNAIL2_HEIGHT, purge=purge)
@@ -65,7 +65,7 @@ def lock_s(filename: str, rich: bool=False, purge: bool=False) -> dict:
         "thumbnail2_height": thumb2_h,
         }
 
-def __make_thumbnail(img: Image, suffix: str, width: int, height: int, purge: bool=False) -> Tuple[str, int, int]:
+def __make_thumbnail(img: Image, suffix: str, width: int, height: int, purge: bool=False, colored=True) -> Tuple[str, int, int]:
     assert img.filename != ""
     if img.size[0] <= width and img.size[0] <= height:
         return img.filename, img.size[0], img.size[1]
@@ -81,7 +81,10 @@ def __make_thumbnail(img: Image, suffix: str, width: int, height: int, purge: bo
     if thumb_width > width:
         thumb_width  = width
         thumb_height = img.size[1] * width // img.size[0]
-    thumb = img.copy()
+    if colored:
+        thumb = img.copy()
+    else:
+        thumb = img.convert('L')
     thumb.thumbnail((thumb_width, thumb_height))
     thumb.save(target, 'JPEG', optimize=True)
     return target, thumb_width, thumb_height

@@ -16,7 +16,7 @@ body {
 }
 
 h1 {
-  background-color: #6080FF;
+  background-color: #676767;
   color: #FFFFFF;
   margin: 0px;
   padding: 12pt 6pt;
@@ -29,7 +29,7 @@ h1 {
 }
 
 .footer {
-  background-color: #6080FF;
+  background-color: #676767;
   color: #FFFFFF;
   margin-top: 36pt;
   padding: 3pt 12pt 12pt 3pt;
@@ -42,13 +42,12 @@ h1 {
 }
 .footer a:link,
 .footer a:visited {
-  color: #FFDF60;
+  color: #DCDCDC;
 }
 .footer a:hover,
 .footer a:active {
-  background-color: #FFDF60;
-  color: #6080FF;
-  text-decoration: none;
+  background-color: #DCDCDC;
+  color: #676767;
 }
 
 a.button {
@@ -56,16 +55,17 @@ a.button {
   padding: 0pt 12pt;
   text-decoration: none;
   background-color: #FFFFFF;
-  border: 3px double #6080FF;
-  color: #6080FF;
+  border: 3px double #676767;
+  color: #676767;
+}
+a.button:hover,
+a.button:active {
+  border-color: #FFFFFF;
+  color: #FFFFFF;
 }
 a.button:hover {
-  background-color: #6080FF;
-  border-color: #FFFFFF;
-  color: #FFFFFF;
+  background-color: #676767;
 }
 a.button:active {
-  background-color: #FF8060;
-  border-color: #FFFFFF;
-  color: #FFFFFF;
+  background-color: #AEAEAE;
 }
