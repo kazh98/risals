@@ -19,6 +19,7 @@ __version__ = '1.19-dev'
 ### Set constant values for configuring the behavior of this program.
 ###
 DEFAULT_TITLE = 'Index of /'
+DEFAULT_FILENAME = 'index.html'
 
 THUMBNAIL_DIR = './cache'
 
@@ -101,6 +102,8 @@ if __name__ == '__main__':
                           help='regenerates all objects and caches')
     argparse.add_argument('-d', '--debug', action='store_true',
                           help='enable debug mode')
+    argparse.add_argument('-o', '--output', action='store', default=DEFAULT_FILENAME,
+                          help='output file name')
     argparse.add_argument('title', action='store', nargs='?', default=DEFAULT_TITLE,
                           help='a message shown as a title of generated album')
     args = argparse.parse_args()
@@ -113,7 +116,7 @@ if __name__ == '__main__':
         loader=FileSystemLoader('.', 'utf-8')
         )
     tpl = env.get_template('index.tpl');
-    with open('index.html', 'wt') as fp:
+    with open(args.output, 'wt') as fp:
         fp.write(tpl.render({
             "rich": args.rich,
             "debug": args.debug,
