@@ -60,6 +60,30 @@ def encode(obj: object) -> str:
                 lp(o)
             sb.append(')')
             return
+        if isinstance(o, dict):
+            if len(o) == 0:
+                sb.append('{}')
+                return
+            sep = '{'
+            for key, value in o.items():
+                if not isinstance(key, str):
+                    raise ValueError('any key of object must be string')
+                sb.append(sep)
+                lp(key)
+                sb.append(':')
+                lp(value)
+                sep = ','
+            sb.append('}')
+            return
+        if isinstance(o, list):
+            sb.append('[')
+            if len(o) > 0:
+                lp(o[0])
+            for item in o[1:]:
+                sb.append(',')
+                lp(item)
+            sb.append(']')
+            return
         if o is None:
             sb.append('null')
             return
@@ -88,8 +112,8 @@ LITERALEND = re.compile(r'[ \t\r\n)\]}:,]|\Z')
 STRING = re.compile(r'"([^"\\]|\\["\\/bfnrt]|\\u[0-9A-Fa-f]{4})*"', re.MULTILINE)
 NUMBER = re.compile(r'-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?\Z')
 SYMBOL = re.compile(r'''(\+|-|\.\.\.|
-[A-Za-z@!$%&*/<=>?^_~]
-[A-Za-z@!$%&*/<=>?^_~0-9+-.]*)\Z''', re.VERBOSE)
+[A-Za-z@!$%&*/\\<=>?^_~]
+[A-Za-z@!$%&*/\\<=>?^_~0-9+-.]*)\Z''', re.VERBOSE)
 
 def decode(code: str, pos: int=0) -> Tuple[object, int]:
     def peek() -> str:
@@ -135,9 +159,10 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
         m = NUMBER.match(token)
         if m:
             if any(m.groups()):
-                return float(m.group())
+                return float(token)
             else:
-                return int(m.group())
+                return int(token)
+
         raise SJSONSyntaxError(code, pos, 'unknown literal')
     
     def nextList() -> Cell:
@@ -170,10 +195,59 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
             except EOFError:
                 raise SJSONSyntaxError(code, pos, 'unclosed list')
 
+    def nextObject() -> dict:
+        ch = poll()
+        if ch != '{':
+            raise SJSONSyntaxError(code, pos, 'internal error')
+        ch = peek()
+        if ch == '}':
+            poll()
+            return {}
+        rvalue = {}
+        while True:
+            try:
+                key = nextString()
+                ch = poll()
+                if ch != ':':
+                    raise SJSONSyntaxError(code, pos, 'lack of colon')
+                value = next()
+                rvalue[key] = value
+                ch = poll()
+            except EOFError:
+                raise SJSONSyntaxError(code, pos, 'unclosed object')
+            if ch == '}':
+                return rvalue
+            if ch != ',':
+                raise SJSONSyntaxError(code, pos, 'lack of comma')
+            
+    def nextArray() -> list:
+        ch = poll()
+        if ch != '[':
+            raise SJSONSyntaxError(code, pos, 'internal error')
+        ch = peek()
+        if ch == ']':
+            poll()
+            return []
+        rvalue = []
+        while True:
+            try:
+                rvalue.append(next())
+                ch = poll()
+            except EOFError:
+                raise SJSONSyntaxError(code, pos, 'unclosed array')
+            if ch == ']':
+                return rvalue
+            if ch != ',':
+                raise SJSONSyntaxError(code, pos, 'lack of comma')
+            
     def next() -> object:
         ch = peek()
         if ch == '(':
             return nextList()
+        if ch == '{':
+            return nextObject()
+        if ch == '[':
+            return nextArray()
         return nextLiteral()
 
     rval = next()
@@ -185,6 +259,10 @@ if __name__ == '__main__':
     DATA = """
 (list and symbol)
 (dotted . pair)
+[]
+[1, 2, 3, 4, 5]
+{}
+{"a": carrot, "b": apple, "c": banana}
 "SIMPLE STRING"
 "COMPLEX\\nMULTI\\tLINED\\n\\"STRING\\u0022\\n"
 1234567890
