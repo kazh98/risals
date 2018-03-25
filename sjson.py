@@ -5,7 +5,7 @@
 ###  - 2018 Risa YASAKA and Kazuhiro HISHINUMA.
 ###############################################################################
 import re, json
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 
 class SJSONSyntaxError(ValueError):
@@ -59,11 +59,23 @@ def encode(obj: object) -> str:
                 lp(o)
             sb.append(')')
             return
+        if o is None:
+            sb.append('null')
+            return
+        if o is True:
+            sb.append('true')
+            return
+        if o is False:
+            sb.append('false')
+            return
         if isinstance(o, Symbol):
             sb.append(o.raw)
             return
         if isinstance(o, str):
-            sb += ['\"', json.dumps(o), '\"']
+            sb.append(json.dumps(o))
+            return
+        if isinstance(o, int) or isinstance(o, float):
+            sb.append(repr(o))
             return
         raise ValueError('given object is not encodable')
     lp(obj)
@@ -71,12 +83,12 @@ def encode(obj: object) -> str:
 
 
 WHITESPACE = re.compile(r'[ \t\r\n]*')
-STRSPCHR = re.compile(r'["\\]', re.MULTILINE)
-STRUCODE = re.compile(r'[0-9A-Fa-f]{4}')
-NUMBER = re.compile(r'-?(0|[1-9][0-9]*)(\.[0-9])?([eE][+-]?[0-9]*)?')
+STRING = re.compile(r'"([^"\\]|\\["\\/bfnrt]|\\u[0-9A-Fa-f]{4})*"', re.MULTILINE)
+NUMBER = re.compile(r'-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?')
 SYMBOL = re.compile(r'''
-[A-Za-z:+\-*/@!?]
-[A-Za-z:+\-*/@!?.0-9]*'''[1:], re.VERBOSE)
+[A-Za-z@!$%&*/:<=>?^_~]
+[A-Za-z@!$%&*/:<=>?^_~0-9+-.]*'''[1:], re.VERBOSE)
+SPSYMS = re.compile(r'(\+|-|\.\.\.)')
 
 def decode(code: str, pos: int=0) -> Tuple[object, int]:
     def peek() -> str:
@@ -122,64 +134,59 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
             except EOFError:
                 raise SJSONSyntaxError(code, pos, 'unclosed list')
 
-    def nextSymbol() -> Symbol:
+    def nextSymbol() -> Union[Symbol, bool, None]:
         nonlocal pos
         peek()
-        m = SYMBOL.match(code, pos)
+        m = SYMBOL.match(code, pos) or SPSYMS.match(code, pos)
         if not m:
-            SJSONSyntaxError('internal error')
+            raise SJSONSyntaxError(code, pos, 'internal error')
         pos = m.end()
-        return gensym(m.group())
+        m = m.group()
+        if m == 'null':
+            return None
+        if m == 'true':
+            return True
+        if m == 'false':
+            return False
+        return gensym(m)
 
     def nextString() -> str:
         nonlocal pos
-        ch = poll()
-        if ch != '\"':
+        peek()
+        m = STRING.match(code, pos)
+        if not m:
+            raise SJSONSyntaxError(code, pos, 'invalid string notation')
+        pos = m.end()
+        return json.loads(m.group())
+
+    def nextNumber() -> Union[int, float]:
+        nonlocal pos
+        peek()
+        m = NUMBER.match(code, pos)
+        if not m:
             raise SJSONSyntaxError(code, pos, 'internal error')
-        sb = []
-        while True:
-            m = STRSPCHR.search(code, pos)
-            if not m:
-                raise SJSONSyntaxError(code, pos, 'unclosed string')
-            sb.append(code[pos:m.start()])
-            pos = m.start()
-            ch = poll()
-            if ch == '\"':
-                return ''.join(sb)
-            if ch == '\\':
-                ch = poll()
-                if ch in '\"\\/':
-                    sb.append(ch)
-                elif ch == 'b':
-                    sb.append('\b')
-                elif ch == 'f':
-                    sb.append('\f')
-                elif ch == 'n':
-                    sb.append('\n')
-                elif ch == 'r':
-                    sb.append('\r')
-                elif ch == 't':
-                    sb.append('\t')
-                elif ch == 'u':
-                    hd = STRUCODE.match(code, pos)
-                    if not hd:
-                        raise SJSONSyntaxError(code, pos, '\\u requires following 4 hexadecimal digits')
-                    pos = hd.end()
-                    hd = hd.group()
-                    sb.append(chr(int(hd, 16)))
-                else:
-                    raise SJSONSyntaxError(code, pos, 'invalid escape sequence')
-                continue
-            raise Exception(code, pos, 'infinite loop has been detected')
+        pos = m.end()
+        dec, exp = m.groups()
+        if dec or exp:
+            return float(m.group())
+        else:
+            return int(m.group())
     
     def next() -> object:
         ch = peek()
         if ch == '(':
             return nextList()
-        if SYMBOL.match(ch):
-            return nextSymbol()
         if ch == '\"':
             return nextString()
+        if ch in '0123456789':
+            return nextNumber()
+        if ch == '-':
+            if pos + 1 < len(code) and code[pos + 1:pos + 2] in '0123456789':
+                return nextNumber()
+            else:
+                return nextSymbol()
+        if SYMBOL.match(ch) or ch in '+.':
+            return nextSymbol()
         raise SJSONSyntaxError(code, pos, 'invalid syntax')
 
     rval = next()
@@ -192,14 +199,16 @@ if __name__ == '__main__':
 (list and symbol)
 (dotted . pair)
 "SIMPLE STRING"
-"COMPLEX
-MULTI\\tLINED\\n\\"STRING\\u0022"
+"COMPLEX\\nMULTI\\tLINED\\n\\"STRING\\u0022\\n"
 1234567890
 -9876543210
 12345.6789
 -9.876543e21
 -9.876543E+21
 9.8765432e-1
++
+-
+...
 true
 false
 null
@@ -208,6 +217,6 @@ null
     for n in itertools.count(1):
         try:
             rval, pos = decode(DATA, pos)
-            print("%d: %s" % (n, encode(rval)))
+            print("%2d: %s, %s" % (n, encode(rval), type(rval)))
         except EOFError:
             break
