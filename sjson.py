@@ -5,6 +5,7 @@
 ###  - 2018 Risa YASAKA and Kazuhiro HISHINUMA.
 ###############################################################################
 import re, json
+from enum import Enum, unique
 from typing import Optional, Tuple, Union
 
 
@@ -83,12 +84,12 @@ def encode(obj: object) -> str:
 
 
 WHITESPACE = re.compile(r'[ \t\r\n]*')
+LITERALEND = re.compile(r'[ \t\r\n)\]}:,]|\Z')
 STRING = re.compile(r'"([^"\\]|\\["\\/bfnrt]|\\u[0-9A-Fa-f]{4})*"', re.MULTILINE)
-NUMBER = re.compile(r'-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?')
-SYMBOL = re.compile(r'''
-[A-Za-z@!$%&*/:<=>?^_~]
-[A-Za-z@!$%&*/:<=>?^_~0-9+-.]*'''[1:], re.VERBOSE)
-SPSYMS = re.compile(r'(\+|-|\.\.\.)')
+NUMBER = re.compile(r'-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?\Z')
+SYMBOL = re.compile(r'''(\+|-|\.\.\.|
+[A-Za-z@!$%&*/<=>?^_~]
+[A-Za-z@!$%&*/<=>?^_~0-9+-.]*)\Z''', re.VERBOSE)
 
 def decode(code: str, pos: int=0) -> Tuple[object, int]:
     def peek() -> str:
@@ -104,6 +105,41 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
         pos += 1
         return rval
 
+    def nextString() -> str:
+        nonlocal pos
+        peek()
+        m = STRING.match(code, pos)
+        if not m:
+            raise SJSONSyntaxError(code, pos, 'invalid string notation')
+        pos = m.end()
+        if not LITERALEND.match(code, pos):
+            raise SJSONSyntaxError(code, pos, 'unknown literal')
+        return json.loads(m.group())
+    
+    def nextLiteral() -> object:
+        nonlocal pos
+        ch = peek()
+        if ch == '"':
+            return nextString()
+        m = LITERALEND.search(code, pos)
+        token = code[pos:m.start()]
+        pos = m.start()
+        if token == 'null':
+            return None
+        if token == 'true':
+            return True
+        if token == 'false':
+            return False
+        if SYMBOL.match(token):
+            return gensym(token)
+        m = NUMBER.match(token)
+        if m:
+            if any(m.groups()):
+                return float(m.group())
+            else:
+                return int(m.group())
+        raise SJSONSyntaxError(code, pos, 'unknown literal')
+    
     def nextList() -> Cell:
         ch = poll()
         if ch != '(':
@@ -134,60 +170,11 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
             except EOFError:
                 raise SJSONSyntaxError(code, pos, 'unclosed list')
 
-    def nextSymbol() -> Union[Symbol, bool, None]:
-        nonlocal pos
-        peek()
-        m = SYMBOL.match(code, pos) or SPSYMS.match(code, pos)
-        if not m:
-            raise SJSONSyntaxError(code, pos, 'internal error')
-        pos = m.end()
-        m = m.group()
-        if m == 'null':
-            return None
-        if m == 'true':
-            return True
-        if m == 'false':
-            return False
-        return gensym(m)
-
-    def nextString() -> str:
-        nonlocal pos
-        peek()
-        m = STRING.match(code, pos)
-        if not m:
-            raise SJSONSyntaxError(code, pos, 'invalid string notation')
-        pos = m.end()
-        return json.loads(m.group())
-
-    def nextNumber() -> Union[int, float]:
-        nonlocal pos
-        peek()
-        m = NUMBER.match(code, pos)
-        if not m:
-            raise SJSONSyntaxError(code, pos, 'internal error')
-        pos = m.end()
-        dec, exp = m.groups()
-        if dec or exp:
-            return float(m.group())
-        else:
-            return int(m.group())
-    
     def next() -> object:
         ch = peek()
         if ch == '(':
             return nextList()
-        if ch == '\"':
-            return nextString()
-        if ch in '0123456789':
-            return nextNumber()
-        if ch == '-':
-            if pos + 1 < len(code) and code[pos + 1:pos + 2] in '0123456789':
-                return nextNumber()
-            else:
-                return nextSymbol()
-        if SYMBOL.match(ch) or ch in '+.':
-            return nextSymbol()
-        raise SJSONSyntaxError(code, pos, 'invalid syntax')
+        return nextLiteral()
 
     rval = next()
     return rval, pos
