@@ -8,7 +8,7 @@ import re, json
 from enum import Enum, unique
 from typing import Optional, Tuple, Union
 
-__all__ = [SJSONSyntaxError, Cell, Symbol, gensym, encode, decode]
+__all__ = ['SJSONSyntaxError', 'Cell', 'Symbol', 'gensym', 'encode', 'decode']
 
 
 class SJSONSyntaxError(ValueError):
@@ -117,7 +117,7 @@ SYMBOL = re.compile(r'''(\+|-|\.\.\.|
 [A-Za-z@!$%&*/\\<=>?^_~]
 [A-Za-z@!$%&*/\\<=>?^_~0-9+-.]*)\Z''', re.VERBOSE)
 
-def decode(code: str, pos: int=0) -> Tuple[object, int]:
+def decode(code: str, pos: int=0, quoteSymbol: str='quote') -> Tuple[object, int]:
     def peek() -> str:
         nonlocal pos
         pos = WHITESPACE.match(code, pos).end()
@@ -252,7 +252,7 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
             return nextArray()
         if ch == '\'':
             poll()
-            return Cell(gensym('quote'), Cell(getNext(), None))
+            return Cell(gensym(quoteSymbol), Cell(getNext(), None))
         return nextLiteral()
 
     rval = getNext()
