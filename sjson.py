@@ -8,6 +8,8 @@ import re, json
 from enum import Enum, unique
 from typing import Optional, Tuple, Union
 
+__all__ = [SJSONSyntaxError, Cell, Symbol, gensym, encode, decode]
+
 
 class SJSONSyntaxError(ValueError):
     def __init__(self, code: str, pos: int, msg: str):
@@ -177,7 +179,7 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
                 if len(lis) <= 0:
                     raise SJSONSyntaxError(code, pos, 'lack of dotted prefix')
                 try:
-                    rval = next()
+                    rval = getNext()
                     if poll() != ')': raise EOFError()
                 except EOFError:
                     raise SJSONSyntaxError(code, pos, 'surplus of dotted suffix')
@@ -191,7 +193,7 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
                     rval = Cell(item, rval)
                 return rval
             try:
-                lis.append(next())
+                lis.append(getNext())
             except EOFError:
                 raise SJSONSyntaxError(code, pos, 'unclosed list')
 
@@ -210,7 +212,7 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
                 ch = poll()
                 if ch != ':':
                     raise SJSONSyntaxError(code, pos, 'lack of colon')
-                value = next()
+                value = getNext()
                 rvalue[key] = value
                 ch = poll()
             except EOFError:
@@ -231,7 +233,7 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
         rvalue = []
         while True:
             try:
-                rvalue.append(next())
+                rvalue.append(getNext())
                 ch = poll()
             except EOFError:
                 raise SJSONSyntaxError(code, pos, 'unclosed array')
@@ -240,7 +242,7 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
             if ch != ',':
                 raise SJSONSyntaxError(code, pos, 'lack of comma')
             
-    def next() -> object:
+    def getNext() -> object:
         ch = peek()
         if ch == '(':
             return nextList()
@@ -248,9 +250,12 @@ def decode(code: str, pos: int=0) -> Tuple[object, int]:
             return nextObject()
         if ch == '[':
             return nextArray()
+        if ch == '\'':
+            poll()
+            return Cell(gensym('quote'), Cell(getNext(), None))
         return nextLiteral()
 
-    rval = next()
+    rval = getNext()
     return rval, pos
 
 
@@ -277,6 +282,11 @@ if __name__ == '__main__':
 true
 false
 null
+'20
+'null
+'(a b c)
+'[a, b, c]
+'{"a": b, "c": null}
 """[1:]
     pos = 0
     for n in itertools.count(1):
