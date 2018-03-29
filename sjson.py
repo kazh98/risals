@@ -117,7 +117,8 @@ SYMBOL = re.compile(r'''(\+|-|\.\.\.|
 [A-Za-z@!$%&*/\\<=>?^_~]
 [A-Za-z@!$%&*/\\<=>?^_~0-9+-.]*)\Z''', re.VERBOSE)
 
-def decode(code: str, pos: int=0, quoteSymbol: str='quote') -> Tuple[object, int]:
+def decode(code: str, pos: int=0, quote: object=gensym('quote'),
+           quasiquote: object=gensym('quasiquote'), unquote: object=gensym('unquote')) -> Tuple[object, int]:
     def peek() -> str:
         nonlocal pos
         pos = WHITESPACE.match(code, pos).end()
@@ -252,7 +253,13 @@ def decode(code: str, pos: int=0, quoteSymbol: str='quote') -> Tuple[object, int
             return nextArray()
         if ch == '\'':
             poll()
-            return Cell(gensym(quoteSymbol), Cell(getNext(), None))
+            return Cell(quote, Cell(getNext(), None))
+        if ch == '`':
+            poll()
+            return Cell(quasiquote, Cell(getNext(), None))
+        if ch == ',':
+            poll()
+            return Cell(unquote, Cell(getNext(), None))
         return nextLiteral()
 
     rval = getNext()
@@ -287,6 +294,8 @@ null
 '(a b c)
 '[a, b, c]
 '{"a": b, "c": null}
+`(a b ,c)
+`[a, b, ,c]
 """[1:]
     pos = 0
     for n in itertools.count(1):

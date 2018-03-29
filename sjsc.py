@@ -11,7 +11,16 @@ from typing import Optional, List, Dict, Reversible
 
 
 VOID_SYMBOL = gensym()
+QUOTE_SYMBOL = gensym('@quote')
+QUASIQUOTE_SYMBOL = gensym('@quasiquote')
+UNQUOTE_SYMBOL = gensym('@unquote')
 INIT_SCRIPT = """
+(@set! @defmacro
+  (@syntax (name args . procs)
+    `(@set! ,name (@syntax ,args . ,procs))))
+(@defmacro @defun (name args . procs)
+  `(@set! ,name (@lambda ,args . ,procs)))
+
 (@defun @list args
   (@defun @lp (args)
     (@if (@null? args)
@@ -33,7 +42,7 @@ class SJSCRuntimeError(RuntimeError):
     def __init__(self, msg: str):
         RuntimeError.__init__(self, msg)
 
-        
+
 def _tolist(lis: Reversible[object]) -> Cell:
     rvalue = None
     for e in reversed(lis):
@@ -109,6 +118,10 @@ def nif_pairp(env, args):
     args = _purelist(args, 1)
     return isinstance(args[0], Cell)
 
+def nif_symbolp(env, args):
+    args = _purelist(args, 1)
+    return isinstance(args[0], Symbol)
+
 def nif_eqp(env, args):
     args = _purelist(args, 2)
     if isinstance(args[0], Symbol):
@@ -117,16 +130,54 @@ def nif_eqp(env, args):
         return args[0] == args[1]
     return args[0] is args[1]
 
+def nif_gensym(env, args):
+    return gensym()
 
+    
 class Syntax(ABC):
     @abstractmethod
     def __call__(self, env, args):
         raise NotImplementedError()
 
+class Macro(Syntax):
+    def __init__(self, vlist, plist):
+        self.vlist = vlist
+        self.plist = plist
+    
+    def __call__(self, env, args):
+        rvalue = VOID_SYMBOL
+        env._stack_push()
+        env._bind(self.vlist, args)
+        procs = self.plist
+        while procs is not None:
+            rvalue = env._eval(procs.car)
+            procs = procs.cdr
+        env._stack_pop()
+        return env._eval(rvalue)
+
 class QuoteSyntax(Syntax):
     def __call__(self, env, args):
         args = _purelist(args, 1)
         return args[0]
+
+class QuasiquoteSyntax(Syntax):
+    def __call__(self, env, args):
+        def quasiquote(obj):
+            if not isinstance(obj, Cell):
+                return obj
+            lis = []
+            while isinstance(obj, Cell):
+                if isinstance(obj.car, Symbol) and obj.car.xid == UNQUOTE_SYMBOL.xid:
+                    rvalue = env._eval(_purelist(obj.cdr, 1)[0])
+                    break
+                lis.append(quasiquote(obj.car))
+                obj = obj.cdr
+                rvalue = obj
+            for e in reversed(lis):
+                rvalue = Cell(e, rvalue)
+            return rvalue
+        args = _purelist(args, 1)
+        return quasiquote(args[0])
 
 class IfSyntax(Syntax):
     def __call__(self, env, args):
@@ -140,15 +191,28 @@ class IfSyntax(Syntax):
             return env._eval(args[2])
         return VOID_SYMBOL
 
-class DefunSyntax(Syntax):
+class LambdaSyntax(Syntax):
     def __call__(self, env, args):
-        if _length(args) < 2:
-            raise SJSCRuntimeError('@defun syntax requires at least two arguments')
-        if not isinstance(args.car, Symbol):
-            raise SJSCRuntimeError('function name must be a Symbol')
-        env._bind(args.car, Function(args.cdr.car, args.cdr.cdr))
-        return VOID_SYMBOL
+        args = _list(args)
+        if not isinstance(args, Cell):
+            raise SJSCRuntimeError('invalid @lambda')
+        return Function(args.car, args.cdr)
 
+class SyntaxSyntax(Syntax):
+    def __call__(self, env, args):
+        args = _list(args)
+        if not isinstance(args, Cell):
+            raise SJSCRuntimeError('invalid @syntax')
+        return Macro(args.car, args.cdr)
+
+class SetSyntax(Syntax):
+    def __call__(self, env, args):
+        args = _purelist(args, 2)
+        if not isinstance(args[0], Symbol):
+            raise SJSCRuntimeError('variable name must be specified as a symbol')
+        env._bind(args[0], env._eval(args[1]))
+        return VOID_SYMBOL
+    
 
 class Environment(object):
     def __init__(self):
@@ -159,10 +223,15 @@ class Environment(object):
         self.bind('@cdr', nif_cdr)
         self.bind('@null?', nif_nullp)
         self.bind('@pair?', nif_pairp)
+        self.bind('@symbol?', nif_symbolp)
         self.bind('@eq?', nif_eqp)
+        self.bind('@gensym', nif_gensym)
         self.bind('@quote', QuoteSyntax())
+        self.bind('@quasiquote', QuasiquoteSyntax())
         self.bind('@if', IfSyntax())
-        self.bind('@defun', DefunSyntax())
+        self.bind('@lambda', LambdaSyntax())
+        self.bind('@syntax', SyntaxSyntax())
+        self.bind('@set!', SetSyntax())
         self.eval(INIT_SCRIPT)
 
     def hasvar(self, var):
@@ -236,7 +305,7 @@ class Environment(object):
         pos = 0
         while True:
             try:
-                obj, pos = sjson.decode(code, pos, quoteSymbol='@quote')
+                obj, pos = sjson.decode(code, pos, quote=QUOTE_SYMBOL, quasiquote=QUASIQUOTE_SYMBOL, unquote=UNQUOTE_SYMBOL)
                 result = self._eval(obj)
             except EOFError:
                 break
@@ -253,10 +322,9 @@ if __name__ == '__main__':
     code = """
 (@if false 0 1)
 (@cons 'a 'b)
-(@defun fun (u) u)
-(fun 15)
 (@list 'a 'b 'c 'd 'e)
 (@reverse '(a b c d e))
 (@eq? '(a b c) '(a b c))
+((@lambda (u) u) 1)
 """[1:]
     env.eval(code)
