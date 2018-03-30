@@ -7,6 +7,7 @@
 import sjson
 from sjson import Cell, Symbol, gensym
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Optional, List, Dict, Reversible
 
 
@@ -37,12 +38,23 @@ INIT_SCRIPT = """
 """[1:]
 
 
-
 class SJSCRuntimeError(RuntimeError):
     def __init__(self, msg: str):
         RuntimeError.__init__(self, msg)
 
+class CompileError(Exception):
+    def __init__(self, msg: str):
+        Exception.__init__(self, msg)
+        
+def _testCE(test: bool, msg: str) -> None:
+    if not test:
+        raise CompileError(msg)
+    return
 
+
+def _symeq(a: object, b: str) -> bool:
+    return isinstance(a, Symbol) and a.xid == gensym(b).xid
+        
 def _tolist(lis: Reversible[object]) -> Cell:
     rvalue = None
     for e in reversed(lis):
@@ -212,12 +224,129 @@ class SetSyntax(Syntax):
             raise SJSCRuntimeError('variable name must be specified as a symbol')
         env._bind(args[0], env._eval(args[1]))
         return VOID_SYMBOL
-    
 
+
+class Function(object):
+    def __init__(self, args, code):
+        self.args = args
+        self.code = code
+
+
+class VirtualMachine(object):
+    def __init__(self):
+        self.stack = []
+        self.env_c = {}
+        self.env_d = {}
+        self.code = None
+        self.dump = None
+
+    def args(n: int) -> None:
+        rvalue = None
+        for i in range(n):
+            rvalue = Cell(self.stack.pop(), rvalue)
+        self.stack.push(rvalue)
+        return
+
+    def apply() -> None:
+        pass
+
+
+class Preprocessor(object):
+    def __init__(self):
+        self.macros = {}
+
+    def __quote(self, code: object) -> object:
+        if isinstance(code, dict):
+            rvalue = None
+            for key, value in code.items():
+                rvalue = Cell(Cell(self.__quote(key), self.__quote(value)), rvalue)
+            return Cell(gensym('@object'), rvalue)
+        if isinstance(code, list):
+            rvalue = None
+            for item in reversed(code):
+                rvalue = Cell(self(item), rvalue)
+            return Cell(gensym('@array'), rvalue)
+        if isinstance(code, Cell):
+            return Cell(self.__quote(code.car), self.__quote(code.cdr))
+        return code
+        
+    def __quasiquote(self, code: object) -> object:
+        if isinstance(code, dict):
+            rvalue = None
+            for key, value in code.items():
+                rvalue = Cell(Cell(self.__quasiquote(key), self.__quasiquote(value)), rvalue)
+            return Cell(gensym('@object'), rvalue)
+        if isinstance(code, list):
+            rvalue = None
+            for item in reversed(code):
+                rvalue = Cell(self(item), rvalue)
+            return Cell(gensym('@array'), rvalue)
+        if isinstance(code, Cell):
+            if _symeq(code.car, '@unquote'):
+                _testCE(isinstance(code.cdr, Cell), '@quote: bad syntax')
+                _testCE(code.cdr.cdr is None, '@quote: bad syntax')
+                return Cell(gensym('@unquote'), Cell(self(code.cdr.car), None))
+            return Cell(self.__quasiquote(code.car), self.__quasiquote(code.cdr))
+        return code
+        
+    def __call__(self, code: object) -> object:
+        if _symeq(code, '@lambda'):
+            raise CompileError('@lambda: bad syntax')
+        if isinstance(code, dict):
+            rvalue = None
+            for key, value in code.items():
+                rvalue = Cell(Cell(self(key), self(value)), rvalue)
+            return Cell(gensym('@object'), rvalue)
+        if isinstance(code, list):
+            rvalue = None
+            for item in reversed(code):
+                rvalue = Cell(self(item), rvalue)
+            return Cell(gensym('@array'), rvalue)
+        if isinstance(code, Cell):
+            if _symeq(code.car, '@quote'):
+                _testCE(isinstance(code.cdr, Cell), '@quote: bad syntax')
+                _testCE(code.cdr.cdr is None, '@quote: bad syntax')
+                return Cell(gensym('@quote'), Cell(self.__quote(code.cdr.car), None))
+            if _symeq(code.car, '@quasiquote'):
+                _testCE(isinstance(code.cdr, Cell), '@quote: bad syntax')
+                _testCE(code.cdr.cdr is None, '@quote: bad syntax')
+                return Cell(gensym('@quasiquote'), Cell(self.__quasiquote(code.cdr.car), None))
+        return code
+
+
+class Compiler(object):
+    def __init__(self):
+        self.vm = VirtualMachine()
+
+    def _compile(self, code: object) -> object:
+        lis = [_CompileState(code, None)]
+        while len(lis) > 0:
+            o = lis.pop()
+            if isinstance(o, dict):
+                pass
+            if isinstance(o, list):
+                pass
+            if isinstance(o, Cell):
+                pass
+
+    def compile(self, code: str) -> object:
+        pos = 0
+        rvalue = VOID_SYMBOL
+        while True:
+            try:
+                obj, pos = sjson.decode(code, pos,
+                    quote=QUOTE_SYMBOL, quasiquote=QUASIQUOTE_SYMBOL, unquote=UNQUOTE_SYMBOL)
+                rvalue = self._eval(self._preprocess(obj))
+            except EOFError:
+                break
+        return rvalue
+
+    
 class Environment(object):
     def __init__(self):
         self.scope = {}
         self.stack = [{}]
+        self.results = []
         self.bind('@cons', nif_cons)
         self.bind('@car', nif_car)
         self.bind('@cdr', nif_cdr)
@@ -310,21 +439,11 @@ class Environment(object):
             except EOFError:
                 break
             if result is not VOID_SYMBOL:
-                try:
-                    print(sjson.encode(result))
-                except:
-                    print(result)
+                self.results.append(result)
         return
 
 
 if __name__ == '__main__':
-    env = Environment()
-    code = """
-(@if false 0 1)
-(@cons 'a 'b)
-(@list 'a 'b 'c 'd 'e)
-(@reverse '(a b c d e))
-(@eq? '(a b c) '(a b c))
-((@lambda (u) u) 1)
-"""[1:]
-    env.eval(code)
+    print(sjson.encode(Preprocessor()(sjson.decode("""
+[1, 2, 3, {"dict": 'hoge}]
+"""[1:], quote=QUOTE_SYMBOL, quasiquote=QUASIQUOTE_SYMBOL, unquote=UNQUOTE_SYMBOL)[0])))
