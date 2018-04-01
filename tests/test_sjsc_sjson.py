@@ -15,6 +15,8 @@ class TestSJStream(unittest.TestCase):
             Cell(Symbol('list'), Cell(Symbol('and'), Cell(Symbol('symbol'), None))))
         self.assertEqual(_d('(dotted . pair)'),
             Cell(Symbol('dotted'), Symbol('pair')))
+        self.assertEqual(_d('((1 2) 3)'),
+            Cell(Cell(1, Cell(2, None)), Cell(3, None)))
 
     def test_object(self):
         self.assertEqual(_d('{}'), {})

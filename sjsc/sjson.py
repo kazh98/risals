@@ -15,9 +15,8 @@ class SJSyntaxError(ValueError):
         self.offset = pos - code.rfind('\n', 0, pos)
         self.msg = msg
 
-
 _WHITESPACE = re.compile(r'[ \t\r\n]*')
-_LITERALEND = re.compile(r'[ \t\r\n)\]}:,]|\Z')
+_TOKEN = re.compile(r'[^()[\]{}\",\'`; \t\r\n]+')
 _STRING = re.compile(r'"([^"\\]|\\["\\/bfnrt]|\\u[0-9A-Fa-f]{4})*"', re.MULTILINE)
 _NUMBER = re.compile(r'-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?\Z')
 _SYMBOL = re.compile(r'''(\+|-|\.\.\.|
@@ -52,6 +51,17 @@ class SJStream(Iterator[object]):
         def __init__(self):
             return
 
+
+@unique
+class SJTokenType(Enum):
+    SYMBOL  = 1
+    INT     = 2
+    FLOAT   = 3
+
+class SJToken(object):
+    def __init__(self, token: str) -> None:
+        self.token = token
+        return
 
 if __name__ == '__main__':
     import itertools
