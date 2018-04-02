@@ -1,3 +1,7 @@
+# Ignore PyCharm files
+.DS_Store
+.idea
+
 # Files specific to this project
 /index.html
 /*.jpg

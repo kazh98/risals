@@ -12,16 +12,16 @@ def _d(s: str) -> object:
 class TestSJStream(unittest.TestCase):
     def test_list(self):
         self.assertEqual(_d('(list and symbol)'),
-            Cell(Symbol('list'), Cell(Symbol('and'), Cell(Symbol('symbol'), None))))
+                         Cell(Symbol('list'), Cell(Symbol('and'), Cell(Symbol('symbol'), None))))
         self.assertEqual(_d('(dotted . pair)'),
-            Cell(Symbol('dotted'), Symbol('pair')))
+                         Cell(Symbol('dotted'), Symbol('pair')))
         self.assertEqual(_d('((1 2) 3)'),
-            Cell(Cell(1, Cell(2, None)), Cell(3, None)))
+                         Cell(Cell(1, Cell(2, None)), Cell(3, None)))
 
     def test_object(self):
         self.assertEqual(_d('{}'), {})
         self.assertEqual(_d('{"a": carrot, "b": apple, "c": banana}'),
-            {'a': Symbol('carrot'), 'b': Symbol('apple'), 'c': Symbol('banana')})
+                         {'a': Symbol('carrot'), 'b': Symbol('apple'), 'c': Symbol('banana')})
         
     def test_array(self):
         self.assertEqual(_d('[]'), [])
@@ -30,7 +30,7 @@ class TestSJStream(unittest.TestCase):
     def test_str(self):
         self.assertEqual(_d('\"SIMPLE STRING\"'), 'SIMPLE STRING')
         self.assertEqual(_d('\"COMPLEX\\nMULTI\\tLINED\\n\\"STRING\\u0022\\n\"'),
-            'COMPLEX\nMULTI\tLINED\n\"STRING\"\n')
+                         'COMPLEX\nMULTI\tLINED\n\"STRING\"\n')
         
     def test_int(self):
         self.assertEqual(_d('1234567890'), 1234567890)
