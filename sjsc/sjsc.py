@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-###############################################################################
-### sjsc: Symbolic JavaScript Compiler
-###  - 2018 Risa YASAKA and Kazuhiro HISHINUMA.
-###############################################################################
 import sjson
 from sjson import Cell, Symbol, gensym
 from abc import ABC, abstractmethod
