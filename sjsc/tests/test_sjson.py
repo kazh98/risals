@@ -48,6 +48,10 @@ class TestSJStream(unittest.TestCase):
         self.assertEqual(_d('false'), False)
         self.assertEqual(_d('null'), None)
 
+    def test_symbol(self):
+        self.assertEqual(_d('+'), Symbol('+'))
+        self.assertEqual(_d('1+'), Symbol('+'))
+
 
 if __name__ == '__main__':
     unittest.main()

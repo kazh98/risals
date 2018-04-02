@@ -29,6 +29,12 @@ class TestCell(unittest.TestCase):
         self.assertTrue(Cell(1, Cell(2, Cell(3, None))).is_proper())
         self.assertFalse(Cell(1, Cell(2, 3)).is_proper())
 
+    def test_reverse(self):
+        self.assertEqual(Cell(1, Cell(2, Cell(3, None))).reverse(),
+                         Cell(3, Cell(2, Cell(1, None))))
+        with self.assertRaises(ValueError):
+            Cell(1, Cell(2, 3)).reverse()
+
     def test_eq(self):
         self.assertTrue(Cell(1, Cell(2, Cell(3, None))) == Cell(1, Cell(2, Cell(3, None))))
         self.assertFalse(Cell(1, Cell(2, Cell(3, None))) == Cell(1, Cell(2, 3)))

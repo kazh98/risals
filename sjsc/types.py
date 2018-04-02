@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from typing import Iterator
 __all__ = ['Symbol', 'Cell', 'CellIterator']
 
 
@@ -35,6 +36,15 @@ class Cell(object):
             p = p.cdr
         return True
 
+    def reverse(self) -> 'Cell':
+        rvalue, p = None, self
+        while p is not None:
+            if not isinstance(p, Cell):
+                raise ValueError('Improper list cannot be reversed.')
+            rvalue = Cell(p.car, rvalue)
+            p = p.cdr
+        return rvalue
+
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Cell) and (
             self.car == other.car and self.cdr == other.cdr)
@@ -54,7 +64,7 @@ class Cell(object):
         return CellIterator(self)
 
 
-class CellIterator(object):
+class CellIterator(Iterator[object]):
     def __init__(self, cell: Cell) -> None:
         self.target = cell
         return

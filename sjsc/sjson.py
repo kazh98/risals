@@ -19,9 +19,14 @@ _WHITESPACE = re.compile(r'[ \t\r\n]*')
 _TOKEN = re.compile(r'[^()[\]{}\",\'`; \t\r\n]+')
 _STRING = re.compile(r'"([^"\\]|\\["\\/bfnrt]|\\u[0-9A-Fa-f]{4})*"', re.MULTILINE)
 _NUMBER = re.compile(r'-?(?:0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?\Z')
-_SYMBOL = re.compile(r'''(\+|-|\.\.\.|
-[A-Za-z@!$%&*/\\<=>?^_~]
-[A-Za-z@!$%&*/\\<=>?^_~0-9+-.]*)\Z''', re.VERBOSE)
+
+
+@unique
+class _ScanStatus(Enum):
+    ROOT = 0
+    LIST = 1
+    OBJECT = 2
+    ARRAY = 3
 
 
 class SJStream(Iterator[object]):
@@ -45,22 +50,4 @@ class SJStream(Iterator[object]):
         return self
 
     def __next__(self) -> object:
-        ch = self.peek()
         raise NotImplementedError()
-    
-    class SJScanStatus(object):
-        def __init__(self):
-            return
-
-
-@unique
-class SJTokenType(Enum):
-    SYMBOL = 1
-    INT = 2
-    FLOAT = 3
-
-
-class SJToken(object):
-    def __init__(self, token: str) -> None:
-        self.token = token
-        return
